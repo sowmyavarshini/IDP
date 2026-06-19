@@ -77,12 +77,26 @@ def _extract_docx(data: bytes) -> str:
 def _extract_image(data: bytes) -> str:
     try:
         from PIL import Image
-        import pytesseract
         img = Image.open(io.BytesIO(data))
-        text = pytesseract.image_to_string(img)
-        return text.strip()
     except Exception as e:
-        return f"[Could not extract text from image: {e}]"
+        return f"[Could not open image: {e}]"
+
+    try:
+        import easyocr
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir) / "ocr.png"
+            img.save(tmp_path)
+            reader = easyocr.Reader(["en"], gpu=False)
+            texts = reader.readtext(str(tmp_path), detail=0)
+
+        cleaned = "\n".join(t.strip() for t in (texts or []) if t and str(t).strip())
+        if cleaned:
+            return cleaned
+        return "[Could not extract text from image: no text detected]"
+    except Exception as e:
+        return f"[EasyOCR image extraction failed: {e}]"
 
 
 def clean_text(text: str) -> str:
