@@ -214,7 +214,7 @@ export function ResultsPage({ documentId, onBack }: Props) {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-white font-semibold">Extracted Fields</h2>
-              {!doc.user_feedback && !feedbackDone && (
+              {/* {!doc.user_feedback && !feedbackDone && (
                 <button
                   onClick={() => setEditMode(!editMode)}
                   className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
@@ -222,7 +222,7 @@ export function ResultsPage({ documentId, onBack }: Props) {
                   <Edit3 className="w-3.5 h-3.5" />
                   {editMode ? 'Cancel editing' : 'Edit fields'}
                 </button>
-              )}
+              )} */}
             </div>
 
             {/* Status summary pills */}
