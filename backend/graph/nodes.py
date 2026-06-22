@@ -173,6 +173,7 @@ Only return valid JSON, nothing else."""
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"Document text:\n\n{text_snippet}"),
         ])
+        print(f"Classification node : {system_prompt}")
         content = response.content.strip()
         content = re.sub(r"^```(?:json)?\s*", "", content)
         content = re.sub(r"\s*```$", "", content)
@@ -330,6 +331,7 @@ Return a single flat JSON object. Only return valid JSON."""
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"Document text:\n\n{text}"),
         ])
+        print(f"Extraction node : {system_prompt}")
         content = response.content.strip()
         content = re.sub(r"^```(?:json)?\s*", "", content)
         content = re.sub(r"\s*```$", "", content)

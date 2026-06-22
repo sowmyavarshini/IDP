@@ -81,9 +81,9 @@ export function ProcessingPage({ documentId, onComplete, onError }: Props) {
           <PipelineStatus steps={steps} isProcessing={status === 'processing'} />
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-4">
+        {/* <p className="text-center text-xs text-slate-600 mt-4">
           This page auto-refreshes every 2 seconds
-        </p>
+        </p> */}
       </div>
     </div>
   );

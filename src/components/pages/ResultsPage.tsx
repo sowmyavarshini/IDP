@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp, Edit3,
+  CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Edit3,
   Loader2, ArrowLeft, FileText, Plus, Trash2, Wand2
 } from 'lucide-react';
 import { api } from '../../api/client';
@@ -56,12 +56,12 @@ export function ResultsPage({ documentId, onBack }: Props) {
       .finally(() => setLoading(false));
   }, [documentId]);
 
-  const submitFeedback = async (type: 'approved' | 'rejected' | 'edited') => {
+  const submitFeedback = async () => {
     if (!doc) return;
     setSubmitting(true);
     try {
-      await api.submitFeedback(doc.id, type, type === 'edited' ? corrections : {});
-      setDoc(prev => prev ? { ...prev, user_feedback: type } : prev);
+      await api.submitFeedback(doc.id, 'edited', corrections);
+      setDoc(prev => prev ? { ...prev, user_feedback: 'edited' } : prev);
       setFeedbackDone(true);
       setEditMode(false);
     } catch {
@@ -145,9 +145,7 @@ export function ResultsPage({ documentId, onBack }: Props) {
                   <Badge variant="info">{DOC_TYPE_LABELS[doc.document_type] || doc.document_type}</Badge>
                 )}
                 {doc.user_feedback && (
-                  <Badge variant={doc.user_feedback === 'approved' ? 'success' : doc.user_feedback === 'rejected' ? 'error' : 'warning'}>
-                    {doc.user_feedback}
-                  </Badge>
+                  <Badge variant="success">reviewed</Badge>
                 )}
               </div>
             </div>
@@ -247,9 +245,9 @@ export function ResultsPage({ documentId, onBack }: Props) {
                     </span>
                   )}
                   {counts.req_miss > 0 && (
-                    <span className="flex items-center gap-1.5 text-xs bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1 rounded-lg">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                      {counts.req_miss} required missing
+                    <span className="flex items-center gap-1.5 text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                      {counts.req_miss} not in document
                     </span>
                   )}
                   {counts.opt_ok > 0 && (
@@ -281,7 +279,7 @@ export function ResultsPage({ documentId, onBack }: Props) {
 
                   return (
                     <div key={key} className={`grid grid-cols-[200px_1fr] gap-3 items-start py-1.5 px-2 rounded-lg transition-colors
-                      ${isRequiredMissing ? 'bg-red-500/5 border border-red-500/10' : ''}`}>
+                      ${isRequiredMissing ? 'bg-amber-500/5 border border-amber-500/10' : ''}`}>
                       <div className="flex items-start gap-1.5 min-w-0">
                         <span className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${cfg.dot}`} />
                         <div className="min-w-0">
@@ -298,20 +296,20 @@ export function ResultsPage({ documentId, onBack }: Props) {
                       ) : (
                         <div className={`text-sm pt-0.5 ${isMissing ? 'text-slate-600 italic' : 'text-slate-200'}`}>
                           {isMissing ? (
-                            <span className={isRequiredMissing ? 'text-red-400 not-italic font-medium' : ''}>
-                              {isRequiredMissing ? 'Not found (required)' : 'Not found'}
+                            <span className={isRequiredMissing ? 'text-amber-500/70 not-italic' : ''}>
+                              {isRequiredMissing ? 'Not present in document' : 'Not found'}
                             </span>
                           ) : Array.isArray(value) ? (
                             <div className="space-y-1">
                               {(value as unknown[]).map((item, i) => (
-                                <div key={i} className="bg-slate-800/60 rounded px-2 py-1 text-xs font-mono">
+                                <div key={i} className="bg-slate-800/60 rounded px-2 py-1 text-xs font-mono" style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>
                                   {typeof item === 'object' ? JSON.stringify(item) : String(item)}
                                 </div>
                               ))}
                             </div>
                           ) : typeof value === 'object' ? (
-                            <span className="font-mono text-xs">{JSON.stringify(value)}</span>
-                          ) : String(value)}
+                            <span className="font-mono text-xs" style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{JSON.stringify(value)}</span>
+                          ) : <span style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{String(value)}</span>}
                         </div>
                       )}
                     </div>
@@ -339,7 +337,7 @@ export function ResultsPage({ documentId, onBack }: Props) {
               </button>
               {showRaw && (
                 <div className="px-6 pb-6">
-                  <pre className="text-xs text-slate-400 whitespace-pre-wrap max-h-60 overflow-auto font-mono leading-relaxed">
+                 <pre className="text-xs text-slate-400 max-h-60 overflow-auto font-mono leading-relaxed m-0" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', overflowWrap: 'break-word' }}>
                     {doc.raw_text}
                   </pre>
                 </div>
@@ -371,39 +369,32 @@ export function ResultsPage({ documentId, onBack }: Props) {
             )}
           </div>
 
-          {/* Feedback panel */}
+          {/* Corrections / Customize panel */}
           {!feedbackDone && !doc.user_feedback ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
-              <h3 className="text-white font-semibold text-sm mb-1">Review Results</h3>
-              <p className="text-slate-500 text-xs mb-3">Your feedback trains the system to improve future extractions.</p>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <div>
+                <h3 className="text-white font-semibold text-sm">Corrections</h3>
+                <p className="text-slate-500 text-xs mt-0.5">Edit any incorrect values or tell the AI which fields to look for next time.</p>
+              </div>
 
-              {editMode && Object.keys(corrections).length > 0 && (
-                <div className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-                  {Object.keys(corrections).length} field(s) edited
+              {/* Save corrections (shown when editing) */}
+              {editMode ? (
+                <div className="space-y-2">
+                  {Object.keys(corrections).length > 0 && (
+                    <div className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                      {Object.keys(corrections).length} field(s) edited
+                    </div>
+                  )}
+                  <button
+                    onClick={submitFeedback}
+                    disabled={submitting || Object.keys(corrections).length === 0}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm font-medium py-2.5 rounded-xl transition-all disabled:opacity-40"
+                  >
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
+                    Save corrections
+                  </button>
                 </div>
-              )}
-
-              {/* Approve */}
-              <button
-                onClick={() => submitFeedback('approved')}
-                disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium py-2.5 rounded-xl transition-all disabled:opacity-50"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Approve
-              </button>
-
-              {/* Save corrections (only when editing) */}
-              {editMode && (
-                <button
-                  onClick={() => submitFeedback('edited')}
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm font-medium py-2.5 rounded-xl transition-all disabled:opacity-50"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
-                  Save corrections
-                </button>
-              )}
+              ) : null}
 
               {/* Customize extraction */}
               <button
@@ -418,14 +409,12 @@ export function ResultsPage({ documentId, onBack }: Props) {
                 {customizing ? 'Hide customization' : 'Customize extraction'}
               </button>
 
-              {/* Customize panel */}
               {customizing && (
                 <div className="border border-sky-500/20 rounded-xl bg-sky-500/5 p-4 space-y-3">
                   <div>
-                    <p className="text-sky-300 text-xs font-semibold mb-0.5">Add missing fields</p>
+                    <p className="text-sky-300 text-xs font-semibold mb-0.5">Request additional fields</p>
                     <p className="text-slate-500 text-xs">
-                      Tell the AI what fields it should extract from <strong className="text-slate-400">{doc.document_type}</strong> documents.
-                      Saved as corrections and injected into future prompts.
+                      Tell the AI what fields to extract from <strong className="text-slate-400">{doc.document_type}</strong> documents in future runs.
                     </p>
                   </div>
 
@@ -474,28 +463,16 @@ export function ResultsPage({ documentId, onBack }: Props) {
                   </button>
                 </div>
               )}
-
-              {/* Reject */}
-              <button
-                onClick={() => submitFeedback('rejected')}
-                disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium py-2.5 rounded-xl transition-all disabled:opacity-50"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                Reject
-              </button>
             </div>
-          ) : (
+          ) : feedbackDone || doc.user_feedback ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <div className="flex items-center gap-2 text-emerald-400">
                 <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm font-medium">Feedback recorded</span>
+                <span className="text-sm font-medium">Corrections saved</span>
               </div>
-              <p className="text-slate-500 text-xs mt-2">
-                Result marked as <strong className="text-slate-300">{doc.user_feedback || 'reviewed'}</strong>. The system will learn from this.
-              </p>
+              <p className="text-slate-500 text-xs mt-2">The system will apply these learnings to future extractions.</p>
             </div>
-          )}
+          ) : null}
 
           {/* Field status breakdown */}
           {Object.keys(validation.field_status || {}).length > 0 && (

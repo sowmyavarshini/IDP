@@ -30,30 +30,87 @@ def extract_text(file_bytes: bytes, filename: str) -> tuple[str, str]:
 
 
 def _extract_pdf(data: bytes) -> str:
+    """
+    1. Try extracting native text.
+    2. If text is insufficient, treat as scanned PDF.
+    3. Convert pages to images and run EasyOCR.
+    """
+    import traceback
+
+    # ----------------------------------
+    # Attempt 1: Native PDF text
+    # ----------------------------------
     try:
         import pypdf
+
         reader = pypdf.PdfReader(io.BytesIO(data))
+
         parts = []
+
         for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                parts.append(text)
-        combined = "\n".join(parts).strip()
-        if combined:
-            return combined
+            txt = page.extract_text()
+            if txt:
+                parts.append(txt)
+
+        text = "\n".join(parts).strip()
+
+        # Digital PDF
+        if len(text) > 100:
+            return text
+
     except Exception:
         pass
 
-    # Fallback: PyMuPDF (fitz)
+    # ----------------------------------
+    # Attempt 2: OCR scanned PDF
+    # ----------------------------------
     try:
         import fitz
+        import easyocr
+        import tempfile
+        from PIL import Image
+
+        reader = easyocr.Reader(["en"], gpu=False)
+
         doc = fitz.open(stream=data, filetype="pdf")
-        parts = []
-        for page in doc:
-            parts.append(page.get_text())
-        return "\n".join(parts).strip()
-    except Exception:
-        pass
+
+        all_text = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+
+                img_path = Path(tmpdir) / f"page_{page_num}.png"
+
+                pix.save(str(img_path))
+
+                results = reader.readtext(
+                    str(img_path),
+                    detail=0
+                )
+
+                page_text = "\n".join(results)
+
+                all_text.append(page_text)
+
+        extracted = "\n".join(all_text).strip()
+
+        if extracted:
+            return extracted
+
+    except Exception as e:
+        return f"""
+PDF OCR extraction failed
+
+Error:
+{str(e)}
+
+Traceback:
+{traceback.format_exc()}
+"""
 
     return "[Could not extract text from PDF]"
 
