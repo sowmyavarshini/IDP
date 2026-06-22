@@ -1,23 +1,46 @@
-from pathlib import Path
-import sys
-import easyocr
+# Easy OCR
 
-reader = easyocr.Reader(["en"], gpu=False)
+# from pathlib import Path
+# import sys
+# import easyocr
 
-def recognize_image_path(path: str):
-	p = Path(path)
-	if not p.exists():
-		raise FileNotFoundError(f"Image file not found: {p}")
-	return reader.readtext(str(p), detail=0)
+# reader = easyocr.Reader(["en"], gpu=False)
 
-def extract_text_from_result(result):
-	return "\n".join(t.strip() for t in (result or []) if t and str(t).strip())
+# def recognize_image_path(path: str):
+# 	p = Path(path)
+# 	if not p.exists():
+# 		raise FileNotFoundError(f"Image file not found: {p}")
+# 	return reader.readtext(str(p), detail=0)
+
+# def extract_text_from_result(result):
+# 	return "\n".join(t.strip() for t in (result or []) if t and str(t).strip())
 
 
-if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		print("Usage: python ocr.py <image_path>")
-		sys.exit(1)
-	image_path = sys.argv[1]
-	res = recognize_image_path(image_path)
-	print(extract_text_from_result(res))
+# if __name__ == "__main__":
+# 	if len(sys.argv) != 2:
+# 		print("Usage: python ocr.py <image_path>")
+# 		sys.exit(1)
+# 	image_path = sys.argv[1]
+# 	res = recognize_image_path(image_path)
+# 	print(extract_text_from_result(res))
+
+#  Docling
+
+# from docling.document_converter import DocumentConverter
+
+# converter = DocumentConverter()
+
+# result = converter.convert("Dr. McCulloch_92524-1 1.pdf")
+
+# print(result.document.export_to_markdown())
+
+# Paddle
+# import paddle
+# from paddleocr import PaddleOCR
+
+
+# ocr = PaddleOCR()
+# results = ocr.predict('Dr. McCulloch_92524-1 1_page-0001.jpg')
+
+# for line in results[0]:
+# 	print(line)

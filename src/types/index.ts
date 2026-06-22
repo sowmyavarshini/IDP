@@ -1,5 +1,5 @@
 export type DocumentStatus = 'pending' | 'processing' | 'completed' | 'failed';
-export type FeedbackType = 'approved' | 'edited' | 'rejected';
+export type FeedbackType = 'edited';
 export type FieldStatus = 'required_extracted' | 'required_missing' | 'optional_extracted' | 'optional_missing';
 
 export interface PipelineStep {

@@ -47,11 +47,18 @@ export function JsonViewer({ data, maxHeight = '400px' }: Props) {
         </button>
       </div>
       <div
-        className="overflow-auto p-4 font-mono text-xs leading-relaxed"
-        style={{ maxHeight }}
+        className="overflow-auto p-4 font-mono text-xs leading-relaxed w-full"
+        style={{ maxHeight, minWidth: 0 }}
       >
         <pre
-          className="whitespace-pre-wrap break-words"
+          className="text-slate-100 m-0"
+          style={{ 
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            overflowWrap: 'break-word',
+            margin: 0,
+            minWidth: 0
+          }}
           dangerouslySetInnerHTML={{ __html: highlight(json) }}
         />
       </div>
